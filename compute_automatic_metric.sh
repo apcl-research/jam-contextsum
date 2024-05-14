@@ -6,7 +6,7 @@ epochs_list=(3 5 10)
 #touch  $FILENAME
 METEORFOLDER="metrics/leave-one-out/METEOR/gemini/pretrained/"
 USEFOLDER="metrics/leave-one-out/USE/gemini/pretrained/"
-
+PREDICTIONFILE="predictions/predict_context_pretrained_holdout_m"
 ## regular use score for method holdout 
 
 for i in {0..39};do
@@ -18,7 +18,7 @@ for i in {0..39};do
 	touch	$FILENAME
 
 	for j in {0..5};do
-output=$((CUDA_DEVICE_ORDER='PCI_BUS_ID' CUDA_VISIBLE_DEVICES='0' python3 use_score_v.py predictions/predict_context_pretrained_holdout_m$i.txt --data=./data/method_holdout_context/context$i/summary --coms-filename=$j.test) 2>&1)
+output=$((CUDA_DEVICE_ORDER='PCI_BUS_ID' CUDA_VISIBLE_DEVICES='0' python3 use_score_v.py $PREDICTIONFILE$i.txt --data=./data/method_holdout_context/context$i/summary --coms-filename=$j.test) 2>&1)
 	echo  $output | tee -a $FILENAME
 	done
 done
@@ -33,7 +33,7 @@ for i in {0..39};do
         touch   $FILENAME
 
         for j in {0..5};do
-output=$((python3 meteor.py predictions/predict_context_pretrained_holdout_m$i.txt --data=./data/method_holdout_context/context$i/summary --coms-filename=$j.test) 2>&1)
+output=$((python3 meteor.py $PREDICTIONFILE$i.txt --data=./data/method_holdout_context/context$i/summary --coms-filename=$j.test) 2>&1)
 	#echo $output
         echo  $output | tee -a $FILENAME
         done
