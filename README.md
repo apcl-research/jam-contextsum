@@ -1,45 +1,57 @@
-# Contextsum
+# Context-aware Code Summary Generation
 
-- model with 1,024 block size and finetuned with 2.15m data is in ```/nublar/jam_1024/ckpt_350m_2.15mdata_1024.pt```
-- model with 1,024 block size and finetuned with both 2.15m data and contextsum is in ```/nfs/dropbox/jam1024_2mcgpt_contextsumgpt4.pt```
-- Data for continuing finetuning, refering to ```contextsum/data/method_holdout_context/context_continue/```
-- Trained with all eyetracking data without any method holdout, refering to ```contextsum/data/method_holdout_context/context_all/``` (236 samples)
-- New data with callgraph ```/nfs/projects/EyeContext/summaries/eyecontext_summaries_with_callgraph_new.pkl``` (394 samples)
+## Quick link
+- [To-do list](#to-do-list)
+- [Compiling dataset](#compiling-dataset)
+- [Finetuning and Inference](#finetuning-and-inference)
+- [Metrics](#metrics)
 
-## USE between context and summary
-```
-CUDA_DEVICE_ORDER='PCI_BUS_ID' CUDA_VISIBLE_DEVICES='0' python3 contextsum/use_with_context.py
-```
+## To-do list
+- To set up your local environment, run the following command. We recommend the use of a virtual environment for running the experiments.
 
-## Train as-is
 ```
-CUDA_DEVICE_ORDER='PCI_BUS_ID' CUDA_VISIBLE_DEVICES='2,3' OMP_NUM_THREADS=2 time torchrun --rdzv-backend=c10d --rdzv-endpoint=localhost:4222 --nnodes=1 --nproc_per_node=2 train.py config/finetune_model_contextsum_method.py --outfilename=ckpt_context_finetuned_without_freeze.pt --always_save_checkpoint=True --gradient_accumulation_steps=16 --dataset=method_holdout_context/context_all
+pip install -r requirements.txt
 ```
+- Please download the dataset and models from [link](https://drive.google.com/drive/folders/12zt7pnnjPckKbQ53vh8OqojC3kx6QIPl?usp=sharing)
+
+## Compiling dataset
+
+We release all of the raw data in the [link](https://drive.google.com/drive/folders/1qF6B1ww2glQERA3BhH0WjFxHf3FlSo2I?usp=drive_link). After you create ``bins``, ``pkls``, and ``tmp`` in ``data/method_holdout_context/context0``, you can simply run the following command to compile the data for 40 methods holdout automatically.
+
 ```
-CUDA_DEVICE_ORDER='PCI_BUS_ID' CUDA_VISIBLE_DEVICES='2' OMP_NUM_THREADS=2 time torchrun --rdzv-backend=c10d --rdzv-endpoint=localhost:4222 --nnodes=1 --nproc_per_node=1 sample.py config/finetune_model_contextsum_method.py --outfilename=ckpt_context_finetuned_without_freeze.pt --prediction_filename=testset_without_freeze.txt --testdir=test_nosum/ --max_new_tokens=50 --dataset=method_holdout_context/context_all --num_samples=5 --temperature=0.5
-```
-## Continue finetuning with contextsum
-```
-CUDA_DEVICE_ORDER='PCI_BUS_ID' CUDA_VISIBLE_DEVICES='2,3' OMP_NUM_THREADS=2 time torchrun --rdzv-backend=c10d --rdzv-endpoint=localhost:4222 --nnodes=1 --nproc_per_node=2 train.py config/finetune_model_contextsum_method_continue.py --outfilename=ckpt_context_continue_finetuned.pt --always_save_checkpoint=True --gradient_accumulation_steps=16 --dataset=method_holdout_context/context_continue
-```
-```
-CUDA_DEVICE_ORDER='PCI_BUS_ID' CUDA_VISIBLE_DEVICES='1' OMP_NUM_THREADS=2 time torchrun --rdzv-backend=c10d --rdzv-endpoint=localhost:4222 --nnodes=1 --nproc_per_node=1 sample.py config/finetune_model_contextsum_method_continue.py --outfilename=ckpt_context_continue_finetuned.pt --prediction_filename=testset_continue.txt --testdir=test_nosum/ --max_new_tokens=50 --dataset=method_holdout_context/context_continue --num_samples=5 --temperature=0.5
+./compile_data_method_context.sh
 ```
 
-## Freeze 75% of the parameters in the linear layer (freeze freeze freeze train)
-```
-CUDA_DEVICE_ORDER='PCI_BUS_ID' CUDA_VISIBLE_DEVICES='0,1' OMP_NUM_THREADS=2 time torchrun --rdzv-backend=c10d --rdzv-endpoint=localhost:4000 --nnodes=1 --nproc_per_node=2 train.py config/finetune_model_contextsum_method.py --outfilename=ckpt_context_finetuned_freeze.pt --always_save_checkpoint=True --gradient_accumulation_steps=16 --dataset=method_holdout_context/context_all --freeze=True
-```
-```
-CUDA_DEVICE_ORDER='PCI_BUS_ID' CUDA_VISIBLE_DEVICES='1' OMP_NUM_THREADS=2 time torchrun --rdzv-backend=c10d --rdzv-endpoint=localhost:4000 --nnodes=1 --nproc_per_node=1 sample.py config/finetune_model_contextsum_method.py --outfilename=ckpt_context_finetuned_freeze.pt --prediction_filename=testset_freeze.txt --testdir=test_nosum/ --max_new_tokens=50 --dataset=method_holdout_context/context_all --num_samples=5 --temperature=0.5
-```
-<!---   -->
-### Old stuff 
-those are old scripts but those are still useful if we want to hold out one method each time and run a bash script to train each method holdout and compile data for each method holdout automatically
-### Compile data for test and train
-- compile data for method holdout  ```./compile_data_method.sh```
-- compile data for method holdout with context  ```./compile_data_method_context.sh```
+## Finetuning and Inference
+These steps will show you how to fine-tune the model for statement prediction.
 
-### Train and predict
-- method holdout: ```./execute_method.sh```
-- participant holdout: ```./execute_participant.sh```
+### Step 1: Download the models for finetuning 
+Please download the checkpoint files named ``ckpt_pretrain.pt`` in the [link](https://drive.google.com/drive/folders/13IfkpWY3g53VD-7uCaaQmKMvk3hx5yO9?usp=drive_link) for finetuning and place the checkpoint to the directory that you will copy from as in the ``execute_method.sh``.
+
+### Step 2: Finetuning model
+You can simply train the model for 40 methods holdout with the following command:
+
+```
+./execute_method.sh
+```
+
+## Metrics
+We also provide the script for computing the automatic metrics. You can simply run the following command after you change the filename in the script.
+
+```
+./compute_automatic_metric.sh
+```
+To combine those metrics into a csv file, you can simply run the following command.
+
+```
+python3 compute_metrics.py --use-dir=metrics/leave-one-out/USE/gemini/pretrained/ --meteor-dir=metrics/leave-one-out/METEOR/gemini/pretrained/ --output-filename=metrics/leave-one-out/jam-pretrained-gemini.csv
+```
+
+- Related parameters are are as follows:
+```
+--use-dir: directory of the USE score file
+--meteor: direcctory of the METEOR score file
+--output-filename: output csv filename
+```
+
+
