@@ -13,7 +13,7 @@
 pip install -r requirements.txt
 ```
 - Please download the dataset from our [Hugginface](https://huggingface.co/datasets/apcl/jam_contextsum)
-- Please download the pretrained model from Jam-CGPT [Hugginface](https://huggingface.co/apcl/Jam-CGPT)
+- Please download the pretrained model from our [Hugginface](https://huggingface.co/apcl/jam-contextsum)
 
 ## Compiling dataset
 
@@ -27,7 +27,7 @@ We release all of the raw data in our [Hugginface](https://huggingface.co/datase
 These steps will show you how to fine-tune the model for statement prediction.
 
 ### Step 1: Download the models for finetuning 
-Please download the checkpoint files named ``ckpt_len1024.pt`` in the Jam-CGPT [Hugginface](https://huggingface.co/apcl/Jam-CGPT) for finetuning and place the checkpoint to the directory that you will copy from as in the ``execute_method.sh``.
+Please download the checkpoint files named ``ckpt_pretrain.pt`` in our [Hugginface](https://huggingface.co/apcl/jam-contextsum) for finetuning and place the checkpoint to the directory that you will copy from as in the ``execute_method.sh``.
 
 ### Step 2: Finetuning model
 You can simply train the model for 40 methods holdout with the following command:
